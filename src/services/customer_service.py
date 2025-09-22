@@ -14,12 +14,10 @@ class CustomerService:
         self.dao = dao
 
     def add_customer(self, name: str, email: str, phone: str, city: str | None = None) -> Dict:
-        # Validate unique email
         if self.dao.get_customer_by_email(email):
             raise CustomerError(f"Email already exists: {email}")
         return self.dao.create_customer(name, email, phone, city)
 
-    # Update phone or city 
     def update_customer(self, cust_id: int, phone: str | None = None, city: str | None = None) -> Dict:
         customer = self.dao.get_customer_by_id(cust_id)
         if not customer:
@@ -44,6 +42,5 @@ class CustomerService:
     def list_customers(self, limit: int = 100) -> List[Dict]:
         return self.dao.list_customers(limit=limit)
 
-    # Search customers by email or city 
     def search_customers(self, email: str | None = None, city: str | None = None) -> List[Dict]:
         return self.dao.search_customers(email=email, city=city)

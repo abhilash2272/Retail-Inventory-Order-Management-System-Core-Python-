@@ -20,7 +20,6 @@ class OrderService:
         total_amount = 0
         validated_items = []
 
-        # Check stock for each product
         for item in items:
             prod = self.product_service.dao.get_product_by_id(item["prod_id"])
             if not prod:
@@ -34,14 +33,12 @@ class OrderService:
             })
             total_amount += prod["price"] * item["quantity"]
 
-        # Deduct stock
         for item in validated_items:
             new_stock = self.product_service.dao.get_product_by_id(item["prod_id"])["stock"] - item["quantity"]
             self.product_service.dao.update_product(item["prod_id"], {"stock": new_stock})
 
         order = self.dao.create_order(customer_id, total_amount)
 
-        # Insert order items
         self.dao.create_order_items(order["order_id"], validated_items)
 
         return self.dao.get_order_details(order["order_id"])
@@ -53,13 +50,11 @@ class OrderService:
         if order_detail["order"]["status"] != "PLACED":
             raise OrderError("Only orders with status 'PLACED' can be cancelled")
 
-        # Restore stock
         for item in order_detail["items"]:
             prod = self.product_service.dao.get_product_by_id(item["prod_id"])
             new_stock = prod["stock"] + item["quantity"]
             self.product_service.dao.update_product(item["prod_id"], {"stock": new_stock})
 
-        # Update status
         return self.dao.update_order_status(order_id, "CANCELLED")
 
     def complete_order(self, order_id: int) -> Dict:

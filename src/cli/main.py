@@ -2,13 +2,11 @@
 import argparse
 import json
 
-# DAOs
 from src.dao.product_dao import ProductDAO
 from src.dao.customer_dao import CustomerDAO
 from src.dao.order_dao import OrderDAO
 from src.dao.payment_dao import PaymentDAO
 
-# Services
 from src.services.product_service import ProductService
 from src.services.customer_service import CustomerService, CustomerError
 from src.services.order_service import OrderService
@@ -18,15 +16,12 @@ from src.services.report_service import ReportService
 
 class RetailCLI:
     def __init__(self):
-        # Services
         self.product_service = ProductService(ProductDAO())
         self.customer_service = CustomerService(CustomerDAO())
-        # Correctly pass OrderDAO instead of ProductDAO
         self.order_service = OrderService(OrderDAO(), CustomerDAO(), self.product_service)
         self.payment_service = PaymentService(PaymentDAO(), self.order_service)
         self.report_service = ReportService()
 
-    # ---------------- Product Commands ----------------
     def cmd_product_add(self, args):
         try:
             p = self.product_service.add_product(args.name, args.sku, args.price, args.stock, args.category)
@@ -39,7 +34,6 @@ class RetailCLI:
         ps = self.product_service.dao.list_products(limit=100)
         print(json.dumps(ps, indent=2, default=str))
 
-    # ---------------- Customer Commands ----------------
     def cmd_customer_add(self, args):
         try:
             c = self.customer_service.add_customer(args.name, args.email, args.phone, args.city)
@@ -72,7 +66,6 @@ class RetailCLI:
         cs = self.customer_service.search_customers(email=args.email, city=args.city)
         print(json.dumps(cs, indent=2, default=str))
 
-    # ---------------- Order Commands ----------------
     def cmd_order_create(self, args):
         items = []
         for item in args.item:
@@ -104,7 +97,6 @@ class RetailCLI:
         except Exception as e:
             print("Error:", e)
 
-    # ---------------- Payment Commands ----------------
     def cmd_payment_process(self, args):
         try:
             payment = self.payment_service.process_payment(args.order, args.method)
@@ -121,7 +113,6 @@ class RetailCLI:
         except PaymentError as e:
             print("Error:", e)
 
-    # ---------------- Report Commands ----------------
     def cmd_report_top_products(self, args):
         top = self.report_service.top_selling_products()
         print(json.dumps(top, indent=2, default=str))
@@ -138,12 +129,10 @@ class RetailCLI:
         customers = self.report_service.frequent_customers()
         print(json.dumps(customers, indent=2, default=str))
 
-    # ---------------- CLI Parser ----------------
     def build_parser(self):
         parser = argparse.ArgumentParser(prog="retail-cli")
         sub = parser.add_subparsers(dest="cmd")
 
-        # Product subcommands
         p_prod = sub.add_parser("product", help="product commands")
         pprod_sub = p_prod.add_subparsers(dest="action")
         addp = pprod_sub.add_parser("add")
@@ -156,7 +145,6 @@ class RetailCLI:
         listp = pprod_sub.add_parser("list")
         listp.set_defaults(func=self.cmd_product_list)
 
-        # Customer subcommands
         p_cust = sub.add_parser("customer", help="customer commands")
         cust_sub = p_cust.add_subparsers(dest="action")
         addc = cust_sub.add_parser("add")
@@ -180,7 +168,6 @@ class RetailCLI:
         searchc.add_argument("--city", default=None)
         searchc.set_defaults(func=self.cmd_customer_search)
 
-        # Order subcommands
         p_order = sub.add_parser("order", help="order commands")
         order_sub = p_order.add_subparsers(dest="action")
         createo = order_sub.add_parser("create")
@@ -194,7 +181,6 @@ class RetailCLI:
         cano.add_argument("--order", type=int, required=True)
         cano.set_defaults(func=self.cmd_order_cancel)
 
-        # Payment subcommands
         p_pay = sub.add_parser("payment", help="payment commands")
         pay_sub = p_pay.add_subparsers(dest="action")
         process = pay_sub.add_parser("process")
@@ -205,7 +191,6 @@ class RetailCLI:
         refund.add_argument("--order", type=int, required=True)
         refund.set_defaults(func=self.cmd_payment_refund)
 
-        # Report subcommands
         p_report = sub.add_parser("report", help="reporting commands")
         report_sub = p_report.add_subparsers(dest="action")
         report_sub.add_parser("top_products").set_defaults(func=self.cmd_report_top_products)
@@ -215,7 +200,6 @@ class RetailCLI:
 
         return parser
 
-    # ---------------- CLI Runner ----------------
     def run(self):
         parser = self.build_parser()
         args = parser.parse_args()
